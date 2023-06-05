@@ -1,0 +1,6 @@
+to build from sample
+java -classpath 'lib/*:ziptrack.jar' PrintTrace -p=traces/trace1/sample.std -f=std -m=traces/trace1/map.txt > traces/trace1/trace.txt
+sequitur/c++/sequitur -d -p -m 2000 < traces/trace1/trace.txt > traces/trace1/slp.txt
+
+
+java -Xmx10000m -Xms10000m -classpath 'ziptrack.jar:lib/*' ZipHB -m traces/trace1/map.txt -t traces/trace1/slp.txt  -s  -v 2

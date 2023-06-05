@@ -1,4 +1,4 @@
-package ziptrack.ziphb;
+package ziptrack.zip.core;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -10,8 +10,13 @@ import java.util.stream.Stream;
 
 import ziptrack.event.EventType;
 import ziptrack.parse.CannotParseException;
+import ziptrack.zip.hb.NonTerminalZipHB;
+import ziptrack.zip.hb.TerminalZipHB;
 
-public class ParseZipHB {
+public class ParseZip <
+	T extends SymbolZip<T, U> & NonTerminalZip<T, U>,
+	U extends SymbolZip<T, U> & TerminalZip
+> {
 	public static HashMap<String, EventType> eventTypeMap = new HashMap<String, EventType> (getEventTypeMap());
 	public static HashMap<String, EventType> getEventTypeMap (){
 		HashMap<String, EventType> eMap = new HashMap<String, EventType> ();
@@ -27,18 +32,21 @@ public class ParseZipHB {
 	public HashMap<String, Integer> lockMap;
 	public HashMap<String, Integer> threadMap;
 	public HashMap<String, Integer> variableMap;
-	public HashMap<String, TerminalZipHB> terminalMap;
-	public HashMap<String, NonTerminalZipHB> nonTerminalMap;
+	public HashMap<String, U> terminalMap;
+	public HashMap<String, T> nonTerminalMap;
 	public String eventSplitBy;
 	
 	public HashMap<Integer, String> threadNames;
 	public HashMap<Integer, String> lockNames;
 	public HashMap<Integer, String> variableNames;
 	
+	private boolean isHB;
+
 	public int hbObjectIndex;
 	public int variableIndex;
 	
-	public ParseZipHB(){
+	public ParseZip (boolean isHB){
+		this.isHB = isHB;
 		init();
 	}
 	
@@ -46,8 +54,8 @@ public class ParseZipHB {
 		lockMap = new HashMap<String, Integer> ();
 		threadMap = new HashMap<String, Integer> ();
 		variableMap = new HashMap<String, Integer> ();
-		terminalMap = new HashMap<String, TerminalZipHB> ();
-		nonTerminalMap = new HashMap<String, NonTerminalZipHB> ();
+		terminalMap = new HashMap<String, U> ();
+		nonTerminalMap = new HashMap<String, T> ();
 		eventSplitBy = "|";
 		
 		hbObjectIndex = 0;
@@ -137,7 +145,10 @@ public class ParseZipHB {
 			throw new IllegalArgumentException("Event already processed ? Terminal-" + idx);
 		}
 		else{
-			TerminalZipHB terminal = new TerminalZipHB("Term" + idx, eType, t, decor);
+			U terminal = isHB
+				? (U) new TerminalZipHB("Term" + idx, eType, t, decor)
+			// change this
+				: (U) new TerminalZipHB("Term" + idx, eType, t, decor);
 			terminalMap.put(idx, terminal);	
 		}
 	}
@@ -155,12 +166,15 @@ public class ParseZipHB {
 		// return line.matches("^[0-9]+ -> ([\\&]?[0-9]+\\s).*");
 	}
 	
-	public NonTerminalZipHB processRule(String line){
+	public T processRule(String line){
 		String[] parts = line.split(" -> ");
 		String nt_name = parts[0];
-		NonTerminalZipHB nt = null;
+		T nt = null;
 		if(!nonTerminalMap.containsKey(nt_name)){
-			nt = new NonTerminalZipHB("NTerm" + nt_name);
+			nt = isHB
+				? (T) new NonTerminalZipHB("NTerm" + nt_name)
+				// change this
+				: (T) new NonTerminalZipHB("NTerm" + nt_name);
 			nonTerminalMap.put(nt_name, nt);
 		}
 		else{
@@ -169,7 +183,7 @@ public class ParseZipHB {
 		
 		
 		String[] rule_str_lst = parts[1].split("\\s+");
-		ArrayList<SymbolZipHB> rule = new ArrayList<SymbolZipHB> ();
+		ArrayList<SymbolZip<T, U>> rule = new ArrayList<> ();
 		
 		boolean allTerminals = true;
 
@@ -177,7 +191,7 @@ public class ParseZipHB {
 			if(symb_str.length() <= 0){
 				throw new IllegalArgumentException("Symbol length is non-positive " + symb_str);
 			}
-			SymbolZipHB symb = null;
+			SymbolZip<T, U> symb = null;
 			
 			if(symb_str.matches("^\\d+$")){
 				allTerminals = false;
@@ -185,8 +199,11 @@ public class ParseZipHB {
 					symb = nonTerminalMap.get(symb_str);
 				}
 				else{
-					symb = new NonTerminalZipHB("NTerm" + symb_str);
-					nonTerminalMap.put(symb_str, (NonTerminalZipHB) symb);
+					symb = isHB
+						? (T) new NonTerminalZipHB("NTerm" + symb_str)
+						// change this
+						: (T) new NonTerminalZipHB("NTerm" + symb_str);
+					nonTerminalMap.put(symb_str, (T) symb);
 				}
 			}
 			// else if(symb_str.matches("^[&]\\d+$")){
@@ -206,13 +223,13 @@ public class ParseZipHB {
 			
 			rule.add(symb);
 			nt.setRule(rule);
-			nt.allTerminals = allTerminals;
+			nt.setAllTerminals(allTerminals);
 		}
 		return nt;
 	}
 	
-	public ArrayList<NonTerminalZipHB> buildGrammar(String traceFile){
-		ArrayList<NonTerminalZipHB> cfg = null;
+	public ArrayList<T> buildGrammar(String traceFile){
+		ArrayList<T> cfg = null;
 		try (Stream<String> stream = Files.lines(Paths.get(traceFile))) {
 			cfg  = stream.filter(s->isRule(s)).map(s->processRule(s)).collect(Collectors.toCollection(ArrayList::new));
 		} catch (IOException e) {
@@ -221,7 +238,7 @@ public class ParseZipHB {
 		return cfg;
 	}
 	
-	public ArrayList<NonTerminalZipHB> parse(String mapFile, String traceFile){
+	public ArrayList<T> parse(String mapFile, String traceFile){
 		this.buildMap(mapFile);
 		return this.buildGrammar(traceFile);
 	}

@@ -8,7 +8,6 @@ import java.util.stream.Stream;
 
 import cmd.CmdOptions;
 import cmd.GetOptions;
-import javafx.util.Pair;
 
 // Given an SLP S, the main function produces an equivalent SLP S'
 // by introducing new production rules for large contiguous blocks of terminals

@@ -1,0 +1,10 @@
+high priority:
+1. implement initiation in TerminalZipVC
+2. implement structure generation in NonTerminalZipVC
+
+low priority:
+1. read up on reflection - can probably avoid a lot of unchecked casting
+
+others:
+1. create an overleaf document with pacmpl template
+2. write a paper for conference - needs more explanation and less technicality
