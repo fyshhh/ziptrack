@@ -260,6 +260,7 @@ public class TerminalZipHB extends SymbolZipHB implements TerminalZip {
 		this.computeAfterWrites();
 		this.computeBeforeWrites();
 		this.computeRace();
+		System.out.println(this.getType());
 	}
 
 	@Override

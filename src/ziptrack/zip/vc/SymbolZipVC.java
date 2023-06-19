@@ -19,8 +19,8 @@ public abstract class SymbolZipVC extends SymbolZip<NonTerminalZipVC, TerminalZi
     protected VectorClock firstReadClock;
     protected VectorClock firstWriteClock;
 
-    protected VectorClock lastRelease;
-    protected VectorClock firstAcquire;
+    protected ArrayList<VectorClock> lastReleases;
+    protected ArrayList<VectorClock> firstAcquires;
     protected HashSet<Integer> locksAcquired;
     protected HashSet<Integer> locksAcquiredBeforeLastRead;
     protected HashSet<Integer> locksAcquiredBeforeLastWrite;

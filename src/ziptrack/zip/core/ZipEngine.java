@@ -150,10 +150,10 @@ public class ZipEngine {
     public static <
         T extends SymbolZip<T, U> & NonTerminalZip<T, U>,
         U extends SymbolZip<T, U> & TerminalZip
-    > void analyze(String mapFile, String traceFile) {
+    > void analyze(String mapFile, String traceFile, boolean isHB) {
         // reflection would probably come in handy here
-        ParseZip<T, U> parser = new ParseZip<>(true);
-        parser.parse(mapFile,traceFile);
+        ParseZip<T, U> parser = new ParseZip<>(isHB);
+        parser.parse(mapFile, traceFile);
 
         // The "start" symbol in the context-free grammar.
         T start = parser.nonTerminalMap.get("0");
@@ -183,9 +183,9 @@ public class ZipEngine {
             // Analyze 'symb' for races.
             symb.computeData();
             race = symb.hasRace;
-            if(race){
-                break;
-            }
+            // if(race){
+            //     break;
+            // }
         }
         long stopTimeAnalysis = System.currentTimeMillis();
         long timeAnalysis = stopTimeAnalysis - startTimeAnalysis;

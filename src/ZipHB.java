@@ -7,7 +7,7 @@ import ziptrack.zip.core.ZipEngine;
 public class ZipHB {
 	public static void main(String args[]){
 		CmdOptions options = new GetOptions(args).parse();
-		ZipEngine.analyze(options.map_file, options.trace_file);
+		ZipEngine.analyze(options.map_file, options.trace_file, true);
 		// ZipHBEngine.analyze(options.map_file, options.trace_file);
 	}
 }

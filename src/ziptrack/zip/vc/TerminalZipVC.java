@@ -1,8 +1,12 @@
 package ziptrack.zip.vc;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 
 import ziptrack.event.EventType;
+import ziptrack.util.VectorClock;
 import ziptrack.zip.core.TerminalZip;
 
 public class TerminalZipVC extends SymbolZipVC implements TerminalZip {
@@ -72,9 +76,69 @@ public class TerminalZipVC extends SymbolZipVC implements TerminalZip {
 		}
 	}
 
+	public void computeClocks() {
+		this.lastReadClock = new VectorClock(this.numThreads);
+		this.lastWriteClock = new VectorClock(this.numThreads);
+		this.firstReadClock = new VectorClock(this.numThreads);
+		this.firstWriteClock = new VectorClock(this.numThreads);
+
+		if (this.getType().isRead()) {
+			this.lastReadClock.setClockIndex(this.getThread(), 1);
+			this.firstReadClock.setClockIndex(this.getThread(), 1);
+		} else if (this.getType().isWrite()) {
+			this.lastWriteClock.setClockIndex(this.getThread(), 1);
+			this.firstWriteClock.setClockIndex(this.getThread(), 1);
+		}
+	}
+
+	public void computeLockEvents() {
+		// find out how to get number of locks
+		this.lastReleases = new ArrayList<>(Collections.nCopies(1, new VectorClock(this.numThreads)));
+		this.firstAcquires = new ArrayList<>(Collections.nCopies(1, new VectorClock(this.numThreads)));
+
+		this.locksAcquired = new HashSet<>();
+		this.locksAcquiredBeforeLastRead = new HashSet<>();
+		this.locksAcquiredBeforeLastWrite = new HashSet<>();
+		this.locksAcquiredBeforeFirstRead = new HashSet<>();
+		this.locksAcquiredBeforeFirstWrite = new HashSet<>();
+
+		if (this.getType().isRelease()) {
+			this.lastReleases.get(this.getDecor()).setClockIndex(this.getThread(), 1);
+		} else if (this.getType().isAcquire()) {
+			this.firstAcquires.get(this.getDecor()).setClockIndex(this.getThread(), 1);
+			this.locksAcquired.add(this.getDecor());
+		}
+	}
+
+	public void computeForkEvents() {
+		this.lastEvents = new ArrayList<>(
+			Collections.nCopies(this.numThreads, new VectorClock(this.numThreads)));
+		this.lastEvents.get(this.getThread()).setClockIndex(this.getThread(), 1);
+		this.lastForkEvents = new ArrayList<>(
+			Collections.nCopies(this.numThreads, new VectorClock(this.numThreads)));
+		if (this.getType().isFork()) {
+			this.lastForkEvents.get(this.getThread()).setClockIndex(this.getThread(), 1);
+		}
+	}
+
+	public void computeJoinEvents() {
+		this.threadsJoined = new HashSet<>();
+		this.threadsJoinedBeforeLastRead = new HashSet<>();
+		this.threadsJoinedBeforeLastWrite = new HashSet<>();
+		this.threadsJoinedBeforeFirstRead = new HashSet<>();
+		this.threadsJoinedBeforeFirstWrite = new HashSet<>();
+
+		if (this.getType().isJoin()) {
+			this.threadsJoined.add(this.getDecor());
+		}
+	}
+
     @Override
     // update as we go
     public void computeData() {
-
+		this.computeClocks();
+		this.computeLockEvents();
+		this.computeForkEvents();
+		this.computeJoinEvents();
     }
 }

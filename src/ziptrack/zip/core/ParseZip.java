@@ -12,6 +12,8 @@ import ziptrack.event.EventType;
 import ziptrack.parse.CannotParseException;
 import ziptrack.zip.hb.NonTerminalZipHB;
 import ziptrack.zip.hb.TerminalZipHB;
+import ziptrack.zip.vc.NonTerminalZipVC;
+import ziptrack.zip.vc.TerminalZipVC;
 
 public class ParseZip <
 	T extends SymbolZip<T, U> & NonTerminalZip<T, U>,
@@ -147,8 +149,7 @@ public class ParseZip <
 		else{
 			U terminal = isHB
 				? (U) new TerminalZipHB("Term" + idx, eType, t, decor)
-			// change this
-				: (U) new TerminalZipHB("Term" + idx, eType, t, decor);
+				: (U) new TerminalZipVC("Term" + idx, eType, t, decor);
 			terminalMap.put(idx, terminal);	
 		}
 	}
@@ -173,14 +174,12 @@ public class ParseZip <
 		if(!nonTerminalMap.containsKey(nt_name)){
 			nt = isHB
 				? (T) new NonTerminalZipHB("NTerm" + nt_name)
-				// change this
-				: (T) new NonTerminalZipHB("NTerm" + nt_name);
+				: (T) new NonTerminalZipVC("NTerm" + nt_name);
 			nonTerminalMap.put(nt_name, nt);
 		}
 		else{
 			nt = nonTerminalMap.get(nt_name);
 		}
-		
 		
 		String[] rule_str_lst = parts[1].split("\\s+");
 		ArrayList<SymbolZip<T, U>> rule = new ArrayList<> ();
@@ -201,8 +200,7 @@ public class ParseZip <
 				else{
 					symb = isHB
 						? (T) new NonTerminalZipHB("NTerm" + symb_str)
-						// change this
-						: (T) new NonTerminalZipHB("NTerm" + symb_str);
+						: (T) new NonTerminalZipVC("NTerm" + symb_str);
 					nonTerminalMap.put(symb_str, (T) symb);
 				}
 			}
