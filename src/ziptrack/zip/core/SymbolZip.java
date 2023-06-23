@@ -28,6 +28,9 @@ public abstract class SymbolZip<
 	public HashSet<Integer> relevantWrites;
 	public HashMap<Integer, HashSet<Integer>> relevantReads; // t -> Set(relevant reads)
 
+	protected Integer numLocks;
+	protected Integer numThreads;
+
 	public Boolean hasRace;
 	public HashMap<T, Integer> parents; // For parents(p) = #of occurrences of this as a child node of p.
 	public int topologicalIndex;

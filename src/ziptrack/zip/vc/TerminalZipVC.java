@@ -77,24 +77,24 @@ public class TerminalZipVC extends SymbolZipVC implements TerminalZip {
 	}
 
 	public void computeClocks() {
-		this.lastReadClock = new HashMap<>();
-		this.lastWriteClock = new HashMap<>();
-		this.firstReadClock = new HashMap<>();
-		this.firstWriteClock = new HashMap<>();
+		this.lastReadClocks = new HashMap<>();
+		this.lastWriteClocks = new HashMap<>();
+		this.firstReadClocks = new HashMap<>();
+		this.firstWriteClocks = new HashMap<>();
 
 		VectorClock vc = new VectorClock(this.numThreads);
 		vc.setClockIndex(this.getThread(), 1);
 		if (this.getType().isRead()) {
 			HashMap<Integer, VectorClock> map = new HashMap<>();
 			map.put(this.getDecor(), vc);
-			this.lastReadClock.put(this.getThread(), map);
-			this.firstReadClock.put(this.getThread(), map);
+			this.lastReadClocks.put(this.getThread(), map);
+			this.firstReadClocks.put(this.getThread(), map);
 			map.put(7, vc);
-			System.out.println(lastReadClock.size());
-			System.out.println(firstReadClock.size());
+			System.out.println(lastReadClocks.size());
+			System.out.println(firstReadClocks.size());
 		} else if (this.getType().isWrite()) {
-			this.lastWriteClock.put(this.getThread(), vc);
-			this.firstWriteClock.put(this.getThread(), vc);
+			this.lastWriteClocks.put(this.getThread(), vc);
+			this.firstWriteClocks.put(this.getThread(), vc);
 		}
 	}
 
@@ -102,12 +102,6 @@ public class TerminalZipVC extends SymbolZipVC implements TerminalZip {
 		// find out how to get number of locks
 		this.lastReleases = new ArrayList<>(Collections.nCopies(1, new VectorClock(this.numThreads)));
 		this.firstAcquires = new ArrayList<>(Collections.nCopies(1, new VectorClock(this.numThreads)));
-
-		this.locksAcquired = new HashSet<>();
-		this.locksAcquiredBeforeLastRead = new HashSet<>();
-		this.locksAcquiredBeforeLastWrite = new HashSet<>();
-		this.locksAcquiredBeforeFirstRead = new HashSet<>();
-		this.locksAcquiredBeforeFirstWrite = new HashSet<>();
 
 		if (this.getType().isRelease()) {
 			this.lastReleases.get(this.getDecor()).setClockIndex(this.getThread(), 1);
@@ -129,12 +123,6 @@ public class TerminalZipVC extends SymbolZipVC implements TerminalZip {
 	}
 
 	public void computeJoinEvents() {
-		this.threadsJoined = new HashSet<>();
-		this.threadsJoinedBeforeLastRead = new HashSet<>();
-		this.threadsJoinedBeforeLastWrite = new HashSet<>();
-		this.threadsJoinedBeforeFirstRead = new HashSet<>();
-		this.threadsJoinedBeforeFirstWrite = new HashSet<>();
-
 		if (this.getType().isJoin()) {
 			this.threadsJoined.add(this.getDecor());
 		}

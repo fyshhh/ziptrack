@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Stack;
 
+import ziptrack.grammar.Symbol;
+
 public class ZipEngine {
     // For every symbol symb in the grammar, construct a 
 	// map symb.parents : non-terminal -> integer
@@ -162,10 +164,15 @@ public class ZipEngine {
         ArrayList<SymbolZip<T, U>> inverseTopologicalSort = initialAnalysis(parser, start);
         int totalSymbols = inverseTopologicalSort.size();
 
-        // Get the topological ordering.
+        // Get the topological ordering; also update the total number of threads and locks in the execution.
         ArrayList<SymbolZip<T, U>> topologicalSort = new ArrayList<>();
+        Integer numLocks = parser.lockMap.size();
+        Integer numThreads = parser.threadMap.size();
         for (int idx = 0; idx < totalSymbols; idx++) {
-            topologicalSort.add(inverseTopologicalSort.get(totalSymbols - idx - 1));
+            SymbolZip<T, U> symb = inverseTopologicalSort.get(totalSymbols - idx - 1);
+            symb.numLocks = numLocks;
+            symb.numThreads = numThreads;
+            topologicalSort.add(symb);
         }
         inverseTopologicalSort = null;
         parser = null;

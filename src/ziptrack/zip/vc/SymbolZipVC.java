@@ -11,33 +11,30 @@ import ziptrack.zip.core.SymbolZip;
 public abstract class SymbolZipVC extends SymbolZip<NonTerminalZipVC, TerminalZipVC> {
     protected String name;
 
-    // Number of locks and threads in the whole system.
-    protected int numLocks;    
     // set numThreads in computeData_allTerminals() in NonTerminalZipVC.
-    protected int numThreads;
 
     // Relevant data and structures used by the algorithm.
-    protected HashMap<Integer, VectorClock> lastWriteClock;
-    protected HashMap<Integer, HashMap<Integer, VectorClock>> lastReadClock;    // t -> x -> VC
-    protected HashMap<Integer, VectorClock> firstWriteClock;
-    protected HashMap<Integer, HashMap<Integer, VectorClock>> firstReadClock;   // t -> x -> VC
+    protected HashMap<Integer, VectorClock> lastWriteClocks;
+    protected HashMap<Integer, HashMap<Integer, VectorClock>> lastReadClocks;    // t -> x -> VC
+    protected HashMap<Integer, VectorClock> firstWriteClocks;
+    protected HashMap<Integer, HashMap<Integer, VectorClock>> firstReadClocks;   // t -> x -> VC
 
     protected ArrayList<VectorClock> lastReleases;
     protected ArrayList<VectorClock> firstAcquires;
     protected HashSet<Integer> locksAcquired;
-    protected HashSet<Integer> locksAcquiredBeforeLastRead;
-    protected HashSet<Integer> locksAcquiredBeforeLastWrite;
-    protected HashSet<Integer> locksAcquiredBeforeFirstRead;
-    protected HashSet<Integer> locksAcquiredBeforeFirstWrite;
+    protected HashMap<Integer, HashSet<Integer>> locksAcquiredBeforeLastWrite;
+    protected HashMap<Integer, HashMap<Integer, HashSet<Integer>>> locksAcquiredBeforeLastRead;
+    protected HashMap<Integer, HashSet<Integer>> locksAcquiredBeforeFirstWrite;
+    protected HashMap<Integer, HashMap<Integer, HashSet<Integer>>> locksAcquiredBeforeFirstRead;
 
     protected ArrayList<VectorClock> lastEvents;        // per thread
     protected ArrayList<VectorClock> lastForkEvents;    // per thread
 
     protected HashSet<Integer> threadsJoined;
-    protected HashSet<Integer> threadsJoinedBeforeLastRead;
-    protected HashSet<Integer> threadsJoinedBeforeLastWrite;
-    protected HashSet<Integer> threadsJoinedBeforeFirstRead;
-    protected HashSet<Integer> threadsJoinedBeforeFirstWrite;
+    protected HashMap<Integer, HashSet<Integer>> threadsJoinedBeforeLastWrite;
+    protected HashMap<Integer, HashMap<Integer, HashSet<Integer>>> threadsJoinedBeforeLastRead;
+    protected HashMap<Integer, HashSet<Integer>> threadsJoinedBeforeFirstWrite;
+    protected HashMap<Integer, HashMap<Integer, HashSet<Integer>>> threadsJoinedBeforeFirstRead;
 
     SymbolZipVC(String n) {
         super(n);
@@ -47,13 +44,24 @@ public abstract class SymbolZipVC extends SymbolZip<NonTerminalZipVC, TerminalZi
 
     @Override
     protected void init() {
-        numLocks = 0;
-        numThreads = 0;
-        
-        lastReadClock = null;
-        lastWriteClock = null;
-        firstReadClock = null;
-        firstWriteClock = null;
+        lastReadClocks = new HashMap<>();
+        lastWriteClocks = new HashMap<>();
+        firstReadClocks = new HashMap<>();
+        firstWriteClocks = new HashMap<>();
+
+        locksAcquired = new HashSet<>();
+        locksAcquiredBeforeLastWrite = new HashMap<>();
+        locksAcquiredBeforeLastRead = new HashMap<>();
+        locksAcquiredBeforeFirstWrite = new HashMap<>();
+        locksAcquiredBeforeFirstRead = new HashMap<>();
+
+        threadsJoined = new HashSet<>();
+        threadsJoinedBeforeLastWrite = new HashMap<>();
+        threadsJoinedBeforeLastRead = new HashMap<>();
+        threadsJoinedBeforeFirstWrite = new HashMap<>();
+        threadsJoinedBeforeFirstRead = new HashMap<>();
+
+        hasRace = false;
     }
 
 }
