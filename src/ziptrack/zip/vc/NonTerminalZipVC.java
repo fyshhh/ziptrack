@@ -108,14 +108,15 @@ public class NonTerminalZipVC extends SymbolZipVC implements NonTerminalZip<NonT
 	@Override
 	protected void countThreadsOrLocks(){
 		this.threadOrLockCount = new HashMap<Integer, Integer> ();
-		for(SymbolZipVC symb: this.rule){
-			for (HashMap.Entry<Integer, Integer> entry : symb.threadOrLockCount.entrySet()){
+		for (SymbolZipVC symb: this.rule) {
+			for (HashMap.Entry<Integer, Integer> entry : symb.threadOrLockCount.entrySet()) {
+				// System.out.println(entry);
 				int u = entry.getKey();
 				int u_cnt = 0;
-				if(this.threadOrLockCount.containsKey(u)){
+				if (this.threadOrLockCount.containsKey(u)) {
 					u_cnt = this.threadOrLockCount.get(u);
 				}
-				this.threadOrLockCount.put(u,  u_cnt + 1);
+				this.threadOrLockCount.put(u, u_cnt + 1);
 			}
 		}
 	}
@@ -140,10 +141,10 @@ public class NonTerminalZipVC extends SymbolZipVC implements NonTerminalZip<NonT
 		this.threadsJoinedBeforeFirstRead = symb.threadsJoinedBeforeFirstRead;
 		this.threadsJoinedBeforeFirstWrite = symb.threadsJoinedBeforeFirstWrite;
 
-		this.isEventInChunk.set(0, !symb.lastReadClock.isZero());
-		this.isEventInChunk.set(1, !symb.lastWriteClock.isZero());
-		this.isEventInChunk.set(2, !symb.firstReadClock.isZero());
-		this.isEventInChunk.set(3, !symb.firstWriteClock.isZero());
+		// this.isEventInChunk.set(0, !symb.lastReadClock.isZero());
+		// this.isEventInChunk.set(1, !symb.lastWriteClock.isZero());
+		// this.isEventInChunk.set(2, !symb.firstReadClock.isZero());
+		// this.isEventInChunk.set(3, !symb.firstWriteClock.isZero());
 	}
 
 	// Because we go through the terminals linearly, this object's clocks should
@@ -164,8 +165,8 @@ public class NonTerminalZipVC extends SymbolZipVC implements NonTerminalZip<NonT
 
 	// Computes whether the four important events are in this or symb.
 	private void computeIsEventInChunk(SymbolZipVC symb) {
-		if (!symb.lastReadClock.isZero()) this.isEventInChunk.set(0, true);
-		if (!symb.lastWriteClock.isZero()) this.isEventInChunk.set(1, true);
+		// if (!symb.lastReadClock.isZero()) this.isEventInChunk.set(0, true);
+		// if (!symb.lastWriteClock.isZero()) this.isEventInChunk.set(1, true);
 	}
 
 	private void mergeLockSets(SymbolZipVC symb) {
@@ -175,29 +176,29 @@ public class NonTerminalZipVC extends SymbolZipVC implements NonTerminalZip<NonT
 		if (!this.isEventInChunk.get(0)) {
 			this.locksAcquiredBeforeLastRead = symb.locksAcquiredBeforeLastRead;
 			this.locksAcquired.forEach((lock) -> {
-				if (this.firstAcquires.get(lock).isLessThanOrEqual(this.lastReadClock))
-					this.locksAcquiredBeforeLastRead.add(lock);
+				// if (this.firstAcquires.get(lock).isLessThanOrEqual(this.lastReadClock))
+				// 	this.locksAcquiredBeforeLastRead.add(lock);
 			});
 		}
 		if (!this.isEventInChunk.get(1)) {
 			this.locksAcquiredBeforeLastWrite = symb.locksAcquiredBeforeLastWrite;
 			this.locksAcquired.forEach((lock) -> {
-				if (this.firstAcquires.get(lock).isLessThanOrEqual(this.lastWriteClock))
-					this.locksAcquiredBeforeLastWrite.add(lock);
+				// if (this.firstAcquires.get(lock).isLessThanOrEqual(this.lastWriteClock))
+				// 	this.locksAcquiredBeforeLastWrite.add(lock);
 			});
 		}
 		if (!this.isEventInChunk.get(2)) {
 			this.locksAcquiredBeforeFirstRead = symb.locksAcquiredBeforeFirstRead;
 			this.locksAcquired.forEach((lock) -> {
-				if (this.firstAcquires.get(lock).isLessThanOrEqual(this.lastReadClock))
-					this.locksAcquiredBeforeFirstRead.add(lock);
+				// if (this.firstAcquires.get(lock).isLessThanOrEqual(this.lastReadClock))
+				// 	this.locksAcquiredBeforeFirstRead.add(lock);
 			});
 		}
 		if (!this.isEventInChunk.get(3)) {
 			this.locksAcquiredBeforeFirstWrite = symb.locksAcquiredBeforeFirstWrite;
 			this.locksAcquired.forEach((lock) -> {
-				if (this.firstAcquires.get(lock).isLessThanOrEqual(this.firstWriteClock))
-					this.locksAcquiredBeforeFirstWrite.add(lock);
+				// if (this.firstAcquires.get(lock).isLessThanOrEqual(this.firstWriteClock))
+				// 	this.locksAcquiredBeforeFirstWrite.add(lock);
 			});
 		}
 		
@@ -226,18 +227,18 @@ public class NonTerminalZipVC extends SymbolZipVC implements NonTerminalZip<NonT
 	}
 
 	private void mergeClocks(SymbolZipVC symb) {
-		if (!symb.lastReadClock.isZero()) {
-			this.lastReadClock = shiftVectorClock(symb.lastReadClock, symb);
-		}
-		if (!symb.lastWriteClock.isZero()) {
-			this.lastWriteClock = shiftVectorClock(symb.lastWriteClock, symb);
-		}
-		if (this.firstReadClock.isZero() && !symb.firstReadClock.isZero()) {
-			this.firstReadClock = shiftVectorClock(symb.firstReadClock, symb);
-		}
-		if (this.firstWriteClock.isZero() && !symb.firstWriteClock.isZero()) {
-			this.firstWriteClock = shiftVectorClock(symb.firstWriteClock, symb);
-		}
+		// if (!symb.lastReadClock.isZero()) {
+		// 	this.lastReadClock = shiftVectorClock(symb.lastReadClock, symb);
+		// }
+		// if (!symb.lastWriteClock.isZero()) {
+		// 	this.lastWriteClock = shiftVectorClock(symb.lastWriteClock, symb);
+		// }
+		// if (this.firstReadClock.isZero() && !symb.firstReadClock.isZero()) {
+		// 	this.firstReadClock = shiftVectorClock(symb.firstReadClock, symb);
+		// }
+		// if (this.firstWriteClock.isZero() && !symb.firstWriteClock.isZero()) {
+		// 	this.firstWriteClock = shiftVectorClock(symb.firstWriteClock, symb);
+		// }
 	}
 
 	// this is called in ZipEngine and has to be defined in NonTerminalZip
@@ -260,18 +261,18 @@ public class NonTerminalZipVC extends SymbolZipVC implements NonTerminalZip<NonT
 			}
 		}
 
-		this.initializeData(this.rule.get(0));
+		// this.initializeData(this.rule.get(0));
 		// merge all relevant data - in theory this should be relatively simple
 		for (int idx = 1; idx < rule_size; idx++) {
-			if (this.hasRace) break;
+			// if (this.hasRace) break;
 
-			TerminalZipVC term = (TerminalZipVC) this.rule.get(idx);
-			this.computeIsEventInChunk(term);
-			this.mergeLockSets(term);
-			this.mergeForkSets(term);
-			this.mergeJoinSets(term);
-			this.mergeClocks(term);
-			this.checkForRace();
+			// TerminalZipVC term = (TerminalZipVC) this.rule.get(idx);
+			// this.computeIsEventInChunk(term);
+			// this.mergeLockSets(term);
+			// this.mergeForkSets(term);
+			// this.mergeJoinSets(term);
+			// this.mergeClocks(term);
+			// this.checkForRace();
 		}
     }
 }

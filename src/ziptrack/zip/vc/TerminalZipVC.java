@@ -71,23 +71,30 @@ public class TerminalZipVC extends SymbolZipVC implements TerminalZip {
 	protected void countThreadsOrLocks(){
 		this.threadOrLockCount = new HashMap<Integer, Integer> ();
 		this.threadOrLockCount.put(this.getThread(), 1);
-		if(this.getType().isLockType() || this.getType().isExtremeType()){
+		if (this.getType().isLockType() || this.getType().isExtremeType()) {
 			this.threadOrLockCount.put(this.getDecor(), 1);
 		}
 	}
 
 	public void computeClocks() {
-		this.lastReadClock = new VectorClock(this.numThreads);
-		this.lastWriteClock = new VectorClock(this.numThreads);
-		this.firstReadClock = new VectorClock(this.numThreads);
-		this.firstWriteClock = new VectorClock(this.numThreads);
+		this.lastReadClock = new HashMap<>();
+		this.lastWriteClock = new HashMap<>();
+		this.firstReadClock = new HashMap<>();
+		this.firstWriteClock = new HashMap<>();
 
+		VectorClock vc = new VectorClock(this.numThreads);
+		vc.setClockIndex(this.getThread(), 1);
 		if (this.getType().isRead()) {
-			this.lastReadClock.setClockIndex(this.getThread(), 1);
-			this.firstReadClock.setClockIndex(this.getThread(), 1);
+			HashMap<Integer, VectorClock> map = new HashMap<>();
+			map.put(this.getDecor(), vc);
+			this.lastReadClock.put(this.getThread(), map);
+			this.firstReadClock.put(this.getThread(), map);
+			map.put(7, vc);
+			System.out.println(lastReadClock.size());
+			System.out.println(firstReadClock.size());
 		} else if (this.getType().isWrite()) {
-			this.lastWriteClock.setClockIndex(this.getThread(), 1);
-			this.firstWriteClock.setClockIndex(this.getThread(), 1);
+			this.lastWriteClock.put(this.getThread(), vc);
+			this.firstWriteClock.put(this.getThread(), vc);
 		}
 	}
 

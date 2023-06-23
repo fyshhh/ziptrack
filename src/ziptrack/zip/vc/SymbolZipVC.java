@@ -1,6 +1,7 @@
 package ziptrack.zip.vc;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 
 import ziptrack.util.VectorClock;
@@ -10,14 +11,16 @@ import ziptrack.zip.core.SymbolZip;
 public abstract class SymbolZipVC extends SymbolZip<NonTerminalZipVC, TerminalZipVC> {
     protected String name;
 
+    // Number of locks and threads in the whole system.
+    protected int numLocks;    
     // set numThreads in computeData_allTerminals() in NonTerminalZipVC.
     protected int numThreads;
 
     // Relevant data and structures used by the algorithm.
-    protected VectorClock lastReadClock;
-    protected VectorClock lastWriteClock;
-    protected VectorClock firstReadClock;
-    protected VectorClock firstWriteClock;
+    protected HashMap<Integer, VectorClock> lastWriteClock;
+    protected HashMap<Integer, HashMap<Integer, VectorClock>> lastReadClock;    // t -> x -> VC
+    protected HashMap<Integer, VectorClock> firstWriteClock;
+    protected HashMap<Integer, HashMap<Integer, VectorClock>> firstReadClock;   // t -> x -> VC
 
     protected ArrayList<VectorClock> lastReleases;
     protected ArrayList<VectorClock> firstAcquires;
@@ -44,6 +47,7 @@ public abstract class SymbolZipVC extends SymbolZip<NonTerminalZipVC, TerminalZi
 
     @Override
     protected void init() {
+        numLocks = 0;
         numThreads = 0;
         
         lastReadClock = null;

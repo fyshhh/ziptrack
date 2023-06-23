@@ -8,3 +8,8 @@ low priority:
 others:
 1. create an overleaf document with pacmpl template
 2. write a paper for conference - needs more explanation and less technicality
+
+current breakages:
+1. NonTerminalZipVC vector clocks are breaking
+2. test TerminalZipVC computeClocks
+3. find a way to add the TOTAL number of locks into the system.

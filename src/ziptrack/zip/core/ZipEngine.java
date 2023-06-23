@@ -24,7 +24,7 @@ public class ZipEngine {
         for (HashMap.Entry<String, T> entry : nonTerminalMap.entrySet()){
             T nt = entry.getValue();
             for(SymbolZip<T, U> symb: nt.getRule()){
-                if(!symb.parents.containsKey(nt)){
+                if(!symb.parents.containsKey(nt)) {
                     symb.parents.put(nt, 0);
                 }
                 int n = symb.parents.get(nt);
