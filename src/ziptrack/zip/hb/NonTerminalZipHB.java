@@ -92,7 +92,7 @@ public class NonTerminalZipHB extends SymbolZipHB implements NonTerminalZip<NonT
 		}
 
 		this.readCount = new HashMap<Integer, HashMap<Integer, Integer>> ();
-		for(SymbolZipHB symb: this.rule){
+		for(SymbolZipHB symb: this.rule) {
 			for (HashMap.Entry<Integer, HashMap<Integer, Integer>> entry : symb.readCount.entrySet()){
 				int t = entry.getKey();
 

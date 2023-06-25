@@ -166,10 +166,20 @@ public class ZipEngine {
 
         // Get the topological ordering; also update the total number of threads and locks in the execution.
         ArrayList<SymbolZip<T, U>> topologicalSort = new ArrayList<>();
+        Integer numVars = parser.variableMap.size();
         Integer numLocks = parser.lockMap.size();
         Integer numThreads = parser.threadMap.size();
+
+        System.out.println("variable map:");
+        parser.variableMap.forEach((s, i) -> System.out.printf("%s %d\n", s, i));
+        System.out.println("lock map:");
+        parser.lockMap.forEach((s, i) -> System.out.printf("%s %d\n", s, i));
+        System.out.println("thread map:");
+        parser.threadMap.forEach((s, i) -> System.out.printf("%s %d\n", s, i));
+
         for (int idx = 0; idx < totalSymbols; idx++) {
             SymbolZip<T, U> symb = inverseTopologicalSort.get(totalSymbols - idx - 1);
+            symb.numVars = numVars;
             symb.numLocks = numLocks;
             symb.numThreads = numThreads;
             topologicalSort.add(symb);

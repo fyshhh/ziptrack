@@ -89,36 +89,35 @@ public class TerminalZipVC extends SymbolZipVC implements TerminalZip {
 			map.put(this.getDecor(), vc);
 			this.lastReadClocks.put(this.getThread(), map);
 			this.firstReadClocks.put(this.getThread(), map);
-			map.put(7, vc);
-			System.out.println(lastReadClocks.size());
-			System.out.println(firstReadClocks.size());
 		} else if (this.getType().isWrite()) {
-			this.lastWriteClocks.put(this.getThread(), vc);
-			this.firstWriteClocks.put(this.getThread(), vc);
+			this.lastWriteClocks.put(this.getDecor(), vc);
+			this.firstWriteClocks.put(this.getDecor(), vc);
 		}
 	}
 
 	public void computeLockEvents() {
-		// find out how to get number of locks
-		this.lastReleases = new ArrayList<>(Collections.nCopies(1, new VectorClock(this.numThreads)));
-		this.firstAcquires = new ArrayList<>(Collections.nCopies(1, new VectorClock(this.numThreads)));
+		this.lastReleases = new HashMap<>();
+		this.firstAcquires = new HashMap<>();
 
+
+		VectorClock clock = new VectorClock(this.numThreads);
+		clock.setClockIndex(this.getThread(), 1);
 		if (this.getType().isRelease()) {
-			this.lastReleases.get(this.getDecor()).setClockIndex(this.getThread(), 1);
+			this.lastReleases.put(this.getDecor(), clock);
 		} else if (this.getType().isAcquire()) {
-			this.firstAcquires.get(this.getDecor()).setClockIndex(this.getThread(), 1);
+			this.firstAcquires.put(this.getDecor(), clock);
 			this.locksAcquired.add(this.getDecor());
 		}
 	}
 
 	public void computeForkEvents() {
-		this.lastEvents = new ArrayList<>(
-			Collections.nCopies(this.numThreads, new VectorClock(this.numThreads)));
-		this.lastEvents.get(this.getThread()).setClockIndex(this.getThread(), 1);
-		this.lastForkEvents = new ArrayList<>(
-			Collections.nCopies(this.numThreads, new VectorClock(this.numThreads)));
+		this.lastEvents = new HashMap<>();
+		VectorClock clock = new VectorClock(this.numThreads);
+		clock.setClockIndex(this.getThread(), 1);
+		this.lastEvents.put(this.getThread(), clock);
+		this.lastForkEvents = new HashMap<>();
 		if (this.getType().isFork()) {
-			this.lastForkEvents.get(this.getThread()).setClockIndex(this.getThread(), 1);
+			this.lastForkEvents.put(this.getThread(), clock);
 		}
 	}
 

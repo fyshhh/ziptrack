@@ -1,6 +1,5 @@
 package ziptrack.zip.vc;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -15,20 +14,20 @@ public abstract class SymbolZipVC extends SymbolZip<NonTerminalZipVC, TerminalZi
 
     // Relevant data and structures used by the algorithm.
     protected HashMap<Integer, VectorClock> lastWriteClocks;
-    protected HashMap<Integer, HashMap<Integer, VectorClock>> lastReadClocks;    // t -> x -> VC
+    protected HashMap<Integer, HashMap<Integer, VectorClock>> lastReadClocks;    // x -> t -> VC
     protected HashMap<Integer, VectorClock> firstWriteClocks;
-    protected HashMap<Integer, HashMap<Integer, VectorClock>> firstReadClocks;   // t -> x -> VC
+    protected HashMap<Integer, HashMap<Integer, VectorClock>> firstReadClocks;   // x -> t -> VC
 
-    protected ArrayList<VectorClock> lastReleases;
-    protected ArrayList<VectorClock> firstAcquires;
+    protected HashMap<Integer, VectorClock> lastReleases;
+    protected HashMap<Integer, VectorClock> firstAcquires;
     protected HashSet<Integer> locksAcquired;
     protected HashMap<Integer, HashSet<Integer>> locksAcquiredBeforeLastWrite;
     protected HashMap<Integer, HashMap<Integer, HashSet<Integer>>> locksAcquiredBeforeLastRead;
     protected HashMap<Integer, HashSet<Integer>> locksAcquiredBeforeFirstWrite;
     protected HashMap<Integer, HashMap<Integer, HashSet<Integer>>> locksAcquiredBeforeFirstRead;
 
-    protected ArrayList<VectorClock> lastEvents;        // per thread
-    protected ArrayList<VectorClock> lastForkEvents;    // per thread
+    protected HashMap<Integer, VectorClock> lastEvents;
+    protected HashMap<Integer, VectorClock> lastForkEvents;
 
     protected HashSet<Integer> threadsJoined;
     protected HashMap<Integer, HashSet<Integer>> threadsJoinedBeforeLastWrite;

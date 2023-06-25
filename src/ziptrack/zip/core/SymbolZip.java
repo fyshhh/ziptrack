@@ -28,6 +28,7 @@ public abstract class SymbolZip<
 	public HashSet<Integer> relevantWrites;
 	public HashMap<Integer, HashSet<Integer>> relevantReads; // t -> Set(relevant reads)
 
+	protected Integer numVars;
 	protected Integer numLocks;
 	protected Integer numThreads;
 

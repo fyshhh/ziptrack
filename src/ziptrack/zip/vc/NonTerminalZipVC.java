@@ -23,6 +23,12 @@ public class NonTerminalZipVC extends SymbolZipVC implements NonTerminalZip<NonT
 	private HashMap<Integer, Boolean> isFirstWriteInChunk;
 	private HashMap<Integer, HashMap<Integer, Boolean>> isFirstReadInChunk;	// t -> x -> bool
 
+    private HashMap<Integer, VectorClock> lastReleasesCopy;
+    private HashMap<Integer, VectorClock> firstAcquiresCopy;
+
+	private HashMap<Integer, VectorClock> lastEventsCopy;
+    private HashMap<Integer, VectorClock> lastForkEventsCopy;
+
     public NonTerminalZipVC(String name) {
         super(name);
         this.rule = null;
@@ -139,11 +145,16 @@ public class NonTerminalZipVC extends SymbolZipVC implements NonTerminalZip<NonT
 		this.firstReadClocks = symb.firstReadClocks;
 		this.firstWriteClocks = symb.firstWriteClocks;
 
+		this.lastReleases = symb.lastReleases;
+		this.firstAcquires = symb.firstAcquires;
 		this.locksAcquired = symb.locksAcquired;
 		this.locksAcquiredBeforeLastRead = symb.locksAcquiredBeforeLastRead;
 		this.locksAcquiredBeforeLastWrite = symb.locksAcquiredBeforeLastWrite;
 		this.locksAcquiredBeforeFirstRead = symb.locksAcquiredBeforeFirstRead;
 		this.locksAcquiredBeforeFirstWrite = symb.locksAcquiredBeforeFirstWrite;
+
+		this.lastEvents = symb.lastEvents;
+		this.lastForkEvents = symb.lastForkEvents;
 
 		this.threadsJoined = symb.threadsJoined;
 		this.threadsJoinedBeforeLastRead = symb.threadsJoinedBeforeLastRead;
@@ -187,78 +198,159 @@ public class NonTerminalZipVC extends SymbolZipVC implements NonTerminalZip<NonT
 		return clock;
 	}
 
-	private void mergeLockSets(SymbolZipVC symb) {
-		this.locksAcquired.addAll(symb.locksAcquired);
-
-		for (HashMap.Entry<Integer, HashSet<Integer>> entry : locksAcquiredBeforeLastWrite.entrySet()) {
-
+	private void computeClocks(SymbolZipVC symb) {
+		this.lastReleasesCopy = new HashMap<>(this.lastReleases);
+		for (HashMap.Entry<Integer, VectorClock> entry : symb.lastReleases.entrySet()) {
+			lastReleasesCopy.put(entry.getKey(), shiftVectorClock(entry.getValue(), symb));
 		}
-		// if (!this.isEventInChunk.get(0)) {
-		// 	this.locksAcquiredBeforeLastRead = symb.locksAcquiredBeforeLastRead;
-		// 	this.locksAcquired.forEach((lock) -> {
-		// 		if (this.firstAcquires.get(lock).isLessThanOrEqual(this.lastReadClock))
-		// 			this.locksAcquiredBeforeLastRead.add(lock);
-		// 	});
-		// }
-		// if (!this.isEventInChunk.get(1)) {
-		// 	this.locksAcquiredBeforeLastWrite = symb.locksAcquiredBeforeLastWrite;
-		// 	this.locksAcquired.forEach((lock) -> {
-		// 		if (this.firstAcquires.get(lock).isLessThanOrEqual(this.lastWriteClock))
-		// 			this.locksAcquiredBeforeLastWrite.add(lock);
-		// 	});
-		// }
-		// if (!this.isEventInChunk.get(2)) {
-		// 	this.locksAcquiredBeforeFirstRead = symb.locksAcquiredBeforeFirstRead;
-		// 	this.locksAcquired.forEach((lock) -> {
-		// 		if (this.firstAcquires.get(lock).isLessThanOrEqual(this.lastReadClock))
-		// 			this.locksAcquiredBeforeFirstRead.add(lock);
-		// 	});
-		// }
-		// if (!this.isEventInChunk.get(3)) {
-		// 	this.locksAcquiredBeforeFirstWrite = symb.locksAcquiredBeforeFirstWrite;
-		// 	this.locksAcquired.forEach((lock) -> {
-		// 		if (this.firstAcquires.get(lock).isLessThanOrEqual(this.firstWriteClock))
-		// 			this.locksAcquiredBeforeFirstWrite.add(lock);
-		// 	});
-		// }
-		
-		// there should be some way to get the number of locks
-		// save this for the end - perhaps move this to mergeClocks
-		// for (int i = 0; i < this.lastReleases.size(); i++) {
-		// 	if (!symb.lastReleases.get(i).isZero())
-		// 		this.lastReleases.set(i,
-		// 			shiftVectorClock(symb.lastReleases.get(i), symb));
-		// 	if (this.firstAcquires.get(i).isZero())
-		// 		this.firstAcquires.set(i,
-		// 			shiftVectorClock(symb.firstAcquires.get(i), symb));
-		// }
+
+		this.firstAcquiresCopy = new HashMap<>(this.firstAcquires);
+		for (HashMap.Entry<Integer, VectorClock> entry : symb.firstAcquires.entrySet()) {
+			firstAcquiresCopy.put(entry.getKey(), shiftVectorClock(entry.getValue(), symb));
+		}
+
+		this.lastEventsCopy = new HashMap<>(this.lastEvents);
+		for (HashMap.Entry<Integer, VectorClock> entry : symb.lastEvents.entrySet()) {
+			lastEventsCopy.put(entry.getKey(), shiftVectorClock(entry.getValue(), symb));
+		}
+
+		this.lastForkEventsCopy = new HashMap<>(this.lastForkEvents);
+		for (HashMap.Entry<Integer, VectorClock> entry : symb.lastForkEvents.entrySet()) {
+			lastForkEventsCopy.put(entry.getKey(), shiftVectorClock(entry.getValue(), symb));
+		}
 	}
 
-	private void mergeForkSets(SymbolZipVC symb) {
+	private void mergeLockSets(SymbolZipVC symb) {
+		for (HashMap.Entry<Integer, VectorClock> entry : symb.lastWriteClocks.entrySet()) {
+			int var = entry.getKey();
+			HashSet<Integer> copy = new HashSet<>(symb.locksAcquiredBeforeLastWrite.get(var));
+			this.locksAcquired.forEach(lock -> {
+				if (this.firstAcquires
+					.getOrDefault(lock, new VectorClock(this.numThreads))
+					.isLessThanOrEqual(this.lastWriteClocks.getOrDefault(var, new VectorClock(this.numThreads)))) {
+						copy.add(lock);
+					}
+			});
+			this.locksAcquiredBeforeLastWrite.put(var, copy);
+		}
 
+		for (HashMap.Entry<Integer, HashMap<Integer, VectorClock>> entry : symb.lastReadClocks.entrySet()) {
+			int var = entry.getKey();
+			HashMap<Integer, HashSet<Integer>> threadMap = symb.locksAcquiredBeforeLastRead.get(var);
+			for (HashMap.Entry<Integer, HashSet<Integer>> entry2 : threadMap.entrySet()) {
+				int thread = entry2.getKey();
+				HashSet<Integer> copy = new HashSet<>(threadMap.get(thread));
+				this.locksAcquired.forEach(lock -> {
+					if (this.firstAcquires
+						.getOrDefault(lock, new VectorClock(this.numThreads))
+						.isLessThanOrEqual(this.lastReadClocks
+							.getOrDefault(var, new HashMap<>())
+							.getOrDefault(thread, new VectorClock(this.numThreads)))) {
+								copy.add(lock);
+							}
+				});
+				this.locksAcquiredBeforeLastRead.computeIfAbsent(var, i -> new HashMap<>()).put(thread, copy);
+			}
+		}
+
+		for (HashMap.Entry<Integer, VectorClock> entry : symb.firstWriteClocks.entrySet()) {
+			int var = entry.getKey();
+			HashSet<Integer> copy = new HashSet<>(symb.locksAcquiredBeforeFirstWrite.get(var));
+			this.locksAcquired.forEach(lock -> {
+				if (this.firstAcquires
+					.getOrDefault(lock, new VectorClock(this.numThreads))
+					.isLessThanOrEqual(this.firstWriteClocks.getOrDefault(var, new VectorClock(this.numThreads)))) {
+						copy.add(lock);
+					}
+			});
+			this.locksAcquiredBeforeFirstWrite.put(var, copy);
+		}
+
+		for (HashMap.Entry<Integer, HashMap<Integer, VectorClock>> entry : symb.firstReadClocks.entrySet()) {
+			int var = entry.getKey();
+			HashMap<Integer, HashSet<Integer>> threadMap = symb.locksAcquiredBeforeFirstRead.get(var);
+			for (HashMap.Entry<Integer, HashSet<Integer>> entry2 : threadMap.entrySet()) {
+				int thread = entry2.getKey();
+				HashSet<Integer> copy = new HashSet<>(threadMap.get(thread));
+				this.locksAcquired.forEach(lock -> {
+					if (this.firstAcquires
+						.getOrDefault(lock, new VectorClock(this.numThreads))
+						.isLessThanOrEqual(this.firstReadClocks
+							.getOrDefault(var, new HashMap<>())
+							.getOrDefault(thread, new VectorClock(this.numThreads)))) {
+								copy.add(lock);
+							}
+				});
+				this.locksAcquiredBeforeFirstRead.computeIfAbsent(var, i -> new HashMap<>()).put(thread, copy);
+			}
+		}
+		
+		this.locksAcquired.addAll(symb.locksAcquired);
 	}
 
 	private void mergeJoinSets(SymbolZipVC symb) {
 
 	}
 
-	private void checkForRace() {
+	private void updateClocks(SymbolZipVC symb) {
+		symb.lastWriteClocks.forEach((var, clock) -> this.lastWriteClocks.put(var, clock));
+		symb.lastReadClocks.forEach((var, map) ->
+			map.forEach((thread, clock) ->
+				this.lastReadClocks.computeIfAbsent(var, v -> new HashMap<>()).put(thread, clock)));
 
+		symb.firstWriteClocks.forEach((var, clock) -> this.firstWriteClocks.putIfAbsent(var, clock));
+
+		symb.firstReadClocks.forEach((var, map) ->
+			map.forEach((thread, clock) ->
+				this.firstReadClocks.computeIfAbsent(var, v -> new HashMap<>()).putIfAbsent(var, clock)));
+
+		this.lastReleases = this.lastReleasesCopy;
+		this.firstAcquires = this.firstAcquiresCopy;
+
+		this.lastEvents = this.lastEventsCopy;
+		this.lastForkEvents = this.lastForkEventsCopy;
 	}
 
-	private void mergeClocks(SymbolZipVC symb) {
-		// if (!symb.lastReadClock.isZero()) {
-		// 	this.lastReadClock = shiftVectorClock(symb.lastReadClock, symb);
-		// }
-		// if (!symb.lastWriteClock.isZero()) {
-		// 	this.lastWriteClock = shiftVectorClock(symb.lastWriteClock, symb);
-		// }
-		// if (this.firstReadClock.isZero() && !symb.firstReadClock.isZero()) {
-		// 	this.firstReadClock = shiftVectorClock(symb.firstReadClock, symb);
-		// }
-		// if (this.firstWriteClock.isZero() && !symb.firstWriteClock.isZero()) {
-		// 	this.firstWriteClock = shiftVectorClock(symb.firstWriteClock, symb);
-		// }
+	private void checkForRace(SymbolZipVC symb) {
+		for (HashMap.Entry<Integer, VectorClock> entry : this.lastWriteClocks.entrySet()) {
+			Integer var = entry.getKey();
+			VectorClock clock = entry.getValue();
+			if (clock.isLessThanOrEqual(symb.firstWriteClocks.get(var))) {
+				this.hasRace = true;
+				return;
+			}
+			for (VectorClock clock2 : symb.firstReadClocks.get(entry.getKey()).values()) {
+				if (clock.isLessThanOrEqual(clock2)) {
+					this.hasRace = true;
+					return;
+				}
+			}
+		}
+
+		for (HashMap.Entry<Integer, HashMap<Integer, VectorClock>> entry : this.lastReadClocks.entrySet()) {
+			Integer var = entry.getKey();
+			HashMap<Integer, VectorClock> threadMap = entry.getValue();
+			for (VectorClock clock : threadMap.values()) {
+				if (clock.isLessThanOrEqual(symb.firstWriteClocks.get(var))) {
+					this.hasRace = true;
+					return;
+				}
+			}
+		}
+	}
+
+	private void updateRWClocks(SymbolZipVC symb) {		
+		symb.lastWriteClocks.replaceAll((var, clock) -> shiftVectorClock(clock, symb));
+
+		symb.lastReadClocks.forEach((thr, map) -> {
+			map.replaceAll((var, clock) -> shiftVectorClock(clock, symb));
+		});
+
+		symb.firstWriteClocks.replaceAll((var, clock) -> shiftVectorClock(clock, symb));
+
+		symb.firstReadClocks.forEach((thr, map) -> {
+			map.replaceAll((var, clock) -> shiftVectorClock(clock, symb));
+		});
 	}
 
 	// this is called in ZipEngine and has to be defined in NonTerminalZip
@@ -289,14 +381,28 @@ public class NonTerminalZipVC extends SymbolZipVC implements NonTerminalZip<NonT
 		this.initializeData(this.rule.get(0));
 		// merge all relevant data - in theory this should be relatively simple
 		for (int idx = 1; idx < rule_size; idx++) {
-			if (this.hasRace) break;
 
 			TerminalZipVC term = (TerminalZipVC) this.rule.get(idx);
+
+			this.hasRace |= term.hasRace;
+			if (this.hasRace) break;
+			// Suppose we have a rule A -> BC. We need to be careful with the order
+			// of our operations because this object originally stores B's data,
+			// and we want to use it to store A's data (which involves calling shift)
+			// without affecting correctness, so we need to do some preprocessing
+			// and store structures that have been shifted while we merge the rest of
+			// the data.
+			// 1. (shift) update B's and C's last/first read/write clocks relative to A
+			// 2. check for race
+			// 3. (shift) compute A's lock/fork/join clocks, but don't overwrite B's yet
+			// 4. merge lock and join sets
+			// 5. overwrite B's sets to A's
+			this.updateRWClocks(term);
+			this.checkForRace(term);
+			this.computeClocks(term);
 			this.mergeLockSets(term);
-			this.mergeForkSets(term);
 			this.mergeJoinSets(term);
-			this.mergeClocks(term);
-			this.checkForRace();
+			this.updateClocks(term);
 		}
     }
 }
