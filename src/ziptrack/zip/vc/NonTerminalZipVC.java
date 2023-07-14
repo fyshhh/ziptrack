@@ -28,6 +28,7 @@ public class NonTerminalZipVC extends SymbolZipVC implements NonTerminalZip<NonT
 
 	private HashMap<Integer, VectorClock> lastEventsCopy;
     private HashMap<Integer, VectorClock> lastForkEventsCopy;
+	private HashMap<Integer, VectorClock> lastJoinEventsCopy;
 
     public NonTerminalZipVC(String name) {
         super(name);
@@ -183,19 +184,34 @@ public class NonTerminalZipVC extends SymbolZipVC implements NonTerminalZip<NonT
 	}
 
 	// Because we go through the terminals linearly, this object's clocks should
-	// always precede symb's.
-	// may have to shift inefficiently
+	// always precede symb's. The current implementation shifts inefficiently (looks through all
+	// locks/threads).
 	private VectorClock shiftVectorClock(VectorClock vc, SymbolZipVC symb) {
-		VectorClock clock = new VectorClock(this.numThreads);
-		for (int i = 0; i < clock.getDim(); i++) {
-			if (clock.getClockIndex(i) > 0) {
-				clock.setClockIndex(i, clock.getClockIndex(i) + this.lastEvents.get(i).getClockIndex(i));
+		VectorClock copy = new VectorClock(vc);
+
+		ArrayList<VectorClock> clockList = new ArrayList<>();
+		symb.firstAcquires.entrySet().stream()
+			.filter(entry -> entry.getValue().isLessThanOrEqual(copy))
+			.map(entry -> entry.getKey())
+			.forEach(key -> clockList.add(this.lastReleases.get(key)));
+		for (int i = 0; i < copy.getDim(); i++) {
+			if (copy.getClockIndex(i) > 0) clockList.add(this.lastForkEvents.get(i));
+		}
+		symb.lastJoinEvents.entrySet().stream()
+			.filter(entry -> entry.getValue().isLessThanOrEqual(copy))
+			.map(entry -> entry.getKey())
+			.forEach(key -> clockList.add(this.lastEvents.get(key)));
+		VectorClock max = new VectorClock(this.numThreads);
+		max.updateWithMax(clockList.toArray(new VectorClock[0]));
+
+		for (int i = 0; i < copy.getDim(); i++) {
+			if (copy.getClockIndex(i) > 0) {
+				copy.setClockIndex(i, copy.getClockIndex(i) + this.lastEvents.get(i).getClockIndex(i));
 			} else {
-				// set vector maximum here
-				clock.setClockIndex(i, i);
+				copy.setClockIndex(i, max.getClockIndex(i));
 			}
 		}
-		return clock;
+		return copy;
 	}
 
 	private void computeClocks(SymbolZipVC symb) {
@@ -217,6 +233,11 @@ public class NonTerminalZipVC extends SymbolZipVC implements NonTerminalZip<NonT
 		this.lastForkEventsCopy = new HashMap<>(this.lastForkEvents);
 		for (HashMap.Entry<Integer, VectorClock> entry : symb.lastForkEvents.entrySet()) {
 			lastForkEventsCopy.put(entry.getKey(), shiftVectorClock(entry.getValue(), symb));
+		}
+
+		this.lastJoinEventsCopy = new HashMap<>(this.lastJoinEvents);
+		for (HashMap.Entry<Integer, VectorClock> entry : symb.lastForkEvents.entrySet()) {
+			lastJoinEventsCopy.put(entry.getKey(), shiftVectorClock(entry.getValue(), symb));
 		}
 	}
 
@@ -288,6 +309,7 @@ public class NonTerminalZipVC extends SymbolZipVC implements NonTerminalZip<NonT
 		this.locksAcquired.addAll(symb.locksAcquired);
 	}
 
+	// implementation should be similar to above
 	private void mergeJoinSets(SymbolZipVC symb) {
 
 	}

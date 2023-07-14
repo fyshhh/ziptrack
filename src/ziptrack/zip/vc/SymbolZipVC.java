@@ -28,6 +28,7 @@ public abstract class SymbolZipVC extends SymbolZip<NonTerminalZipVC, TerminalZi
 
     protected HashMap<Integer, VectorClock> lastEvents;
     protected HashMap<Integer, VectorClock> lastForkEvents;
+    protected HashMap<Integer, VectorClock> lastJoinEvents;
 
     protected HashSet<Integer> threadsJoined;
     protected HashMap<Integer, HashSet<Integer>> threadsJoinedBeforeLastWrite;
@@ -48,11 +49,17 @@ public abstract class SymbolZipVC extends SymbolZip<NonTerminalZipVC, TerminalZi
         firstReadClocks = new HashMap<>();
         firstWriteClocks = new HashMap<>();
 
+        lastReleases = new HashMap<>();
+        firstAcquires = new HashMap<>();
         locksAcquired = new HashSet<>();
         locksAcquiredBeforeLastWrite = new HashMap<>();
         locksAcquiredBeforeLastRead = new HashMap<>();
         locksAcquiredBeforeFirstWrite = new HashMap<>();
         locksAcquiredBeforeFirstRead = new HashMap<>();
+
+        lastEvents = new HashMap<>();
+        lastForkEvents = new HashMap<>();
+        lastJoinEvents = new HashMap<>();
 
         threadsJoined = new HashSet<>();
         threadsJoinedBeforeLastWrite = new HashMap<>();

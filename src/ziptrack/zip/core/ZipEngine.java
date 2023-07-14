@@ -200,9 +200,9 @@ public class ZipEngine {
             // Analyze 'symb' for races.
             symb.computeData();
             race = symb.hasRace;
-            // if(race){
-            //     break;
-            // }
+            if(race){
+                break;
+            }
         }
         long stopTimeAnalysis = System.currentTimeMillis();
         long timeAnalysis = stopTimeAnalysis - startTimeAnalysis;
